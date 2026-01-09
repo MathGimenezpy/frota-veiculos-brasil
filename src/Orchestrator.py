@@ -1,9 +1,9 @@
 from datetime import datetime
 from pathlib import Path
 
-from src.bronze_ingestion_ckan import executar_bronze
-from src.silver_processing import executar_silver
-from src.gold_metrics import executar_gold
+from .bronze_ingestion_ckan import executar_bronze
+from .silver_processing import executar_silver
+from .gold_metrics import executar_gold
 
 # =========================
 # Paths
