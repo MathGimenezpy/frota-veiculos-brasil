@@ -1,28 +1,45 @@
-name: Pipeline RENAVAM
+name: Pipeline Frota Veículos Brasil
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: "0 6 * * 1"   # toda segunda-feira às 06:00 UTC
-  workflow_dispatch:     # permite rodar manualmente
+    - cron: "0 3 1 * *"   # mensal, exemplo
 
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
 
+    env:
+      SUPABASE_HOST: ${{ secrets.SUPABASE_HOST }}
+      SUPABASE_DB: ${{ secrets.SUPABASE_DB }}
+      SUPABASE_USER: ${{ secrets.SUPABASE_USER }}
+      SUPABASE_PORT: ${{ secrets.SUPABASE_PORT }}
+      SUPABASE_PASSWORD: ${{ secrets.SUPABASE_PASSWORD }}
+
     steps:
-      - name: Checkout repository
+      - name: Checkout pipeline repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run data pipeline
+      - name: Run pipeline (Bronze → Silver → Gold)
         run: |
-          python src/orchestrator.py
+          python src/Orchestrator.py
+
+      - name: Checkout utils repo (private)
+        uses: actions/checkout@v4
+        with:
+          repository: MathGimenezpy/utils
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: utils
+
+      - name: Run load to Supabase
+        run: |
+          python utils/load_gold_to_supabase.py
