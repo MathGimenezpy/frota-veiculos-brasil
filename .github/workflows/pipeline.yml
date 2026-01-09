@@ -31,8 +31,7 @@ jobs:
 
       - name: Run pipeline (Bronze → Silver → Gold)
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
-          python src/Orchestrator.py
+          python -m src.Orchestrator
 
       - name: Checkout utils repo (private)
         uses: actions/checkout@v4
