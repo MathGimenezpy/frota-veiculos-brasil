@@ -1,0 +1,17 @@
+# Ambiente virtual
+.venv/
+__pycache__/
+
+# Dados gerados pelo pipeline (NÃO versionar)
+data/bronze/
+data/silver/
+data/gold/
+
+# Ignorar todos os Parquets por padrão
+*.parquet
+
+# EXCEÇÃO: dimensões são regras e DEVEM ser versionadas
+!data/dimensions/*.parquet
+
+# Metadados técnicos de execução (NÃO versionar)
+data/metadata/

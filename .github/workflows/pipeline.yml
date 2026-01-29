@@ -1,0 +1,60 @@
+name: Pipeline Frota Veículos Brasil
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 9 * * 1"
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    env:
+      SUPABASE_HOST: ${{ secrets.SUPABASE_HOST }}
+      SUPABASE_DB: ${{ secrets.SUPABASE_DB }}
+      SUPABASE_USER: ${{ secrets.SUPABASE_USER }}
+      SUPABASE_PORT: ${{ secrets.SUPABASE_PORT }}
+      SUPABASE_PASSWORD: ${{ secrets.SUPABASE_PASSWORD }}
+
+    steps:
+      - name: Checkout pipeline repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run pipeline (Bronze → Silver → Gold)
+        run: |
+          python -m src.Orchestrator
+
+      - name: Checkout utils repo (private)
+        uses: actions/checkout@v4
+        with:
+          repository: MathGimenezpy/utils
+          token: ${{ secrets.UTILS_REPO_TOKEN }}
+          path: utils
+
+      - name: Test Supabase connection via psql
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          PGPASSWORD="${SUPABASE_PASSWORD}" psql \
+            -h "${SUPABASE_HOST}" \
+            -p "${SUPABASE_PORT}" \
+            -U "${SUPABASE_USER}" \
+            -d "${SUPABASE_DB}" \
+            --set=sslmode=require \
+            -c "select 1;"
+
+      - name: Run load to Supabase
+        run: |
+          python utils/load_gold_to_supabase.py
